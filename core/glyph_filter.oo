@@ -1,0 +1,126 @@
+// # Glyph Search and Taxonomy Filter
+//
+// Logline: Search engine and category classifier querying the sovereign glyph catalog.
+//
+// Setup: Pure query engine supporting keyword searches, category filters, and codepoint lookups.
+//
+// Beats:
+//   1. Perform substring search across names, tags, categories, and hex codepoints.
+//   2. Filter glyph catalog items by specific taxonomy category names.
+//   3. Lookup exact glyph records by character symbol or Unicode hex notation.
+//   4. Aggregate category metrics and compute sample symbol clusters.
+
+import "glyph_types.oo";
+import "glyph_catalog.oo";
+
+fn str_contains_sub(haystack: String, needle: String) -> Bool {
+    let h_len: Int = chars_len(haystack);
+    let n_len: Int = chars_len(needle);
+    if n_len == 0 {
+        return true;
+    }
+    if n_len > h_len {
+        return false;
+    }
+    let mut i: Int = 0;
+    while i + n_len <= h_len {
+        if str_slice(haystack, i, i + n_len) == needle {
+            return true;
+        }
+        i = i + 1;
+    }
+    return false;
+}
+
+pub fn search_glyphs(query: String) -> GlyphSearchResult {
+    let catalog: List[GlyphItem] = get_standard_catalog();
+    let total: Int = list_len(catalog);
+    let mut matches: List[GlyphItem] = list_new();
+    let clean_query: String = str_trim(query);
+
+    let mut i: Int = 0;
+    while i < total {
+        let item: GlyphItem = list_get(catalog, i);
+        if chars_len(clean_query) == 0 {
+            matches = list_push(matches, item);
+        } else if str_contains_sub(item.name, clean_query)
+            || str_contains_sub(item.codepoint_hex, clean_query)
+            || str_contains_sub(item.category, clean_query)
+            || str_contains_sub(item.tags, clean_query) {
+            matches = list_push(matches, item);
+        }
+        i = i + 1;
+    }
+
+    return make_search_result(clean_query, matches);
+}
+
+pub fn filter_by_category(category_name: String) -> List[GlyphItem] {
+    let catalog: List[GlyphItem] = get_standard_catalog();
+    let total: Int = list_len(catalog);
+    let mut matches: List[GlyphItem] = list_new();
+    let clean_cat: String = str_trim(category_name);
+
+    let mut i: Int = 0;
+    while i < total {
+        let item: GlyphItem = list_get(catalog, i);
+        if item.category == clean_cat {
+            matches = list_push(matches, item);
+        }
+        i = i + 1;
+    }
+
+    return matches;
+}
+
+pub fn lookup_glyph_exact(identifier: String) -> GlyphSearchResult {
+    let catalog: List[GlyphItem] = get_standard_catalog();
+    let total: Int = list_len(catalog);
+    let mut matches: List[GlyphItem] = list_new();
+    let clean_id: String = str_trim(identifier);
+
+    let mut i: Int = 0;
+    while i < total {
+        let item: GlyphItem = list_get(catalog, i);
+        if item.name == clean_id || item.symbol == clean_id || item.codepoint_hex == clean_id {
+            matches = list_push(matches, item);
+        }
+        i = i + 1;
+    }
+
+    return make_search_result(clean_id, matches);
+}
+
+pub fn get_category_summaries() -> List[CategorySummary] {
+    let mut out: List[CategorySummary] = list_new();
+    let cats: List[String] = list_push(
+        list_push(
+            list_push(
+                list_push(list_new(), "developer"),
+                "ui"
+            ),
+            "status"
+        ),
+        "box"
+    );
+    let cats_all: List[String] = list_push(cats, "circadian");
+
+    let n_cats: Int = list_len(cats_all);
+    let mut ci: Int = 0;
+    while ci < n_cats {
+        let cat_name: String = list_get(cats_all, ci);
+        let items: List[GlyphItem] = filter_by_category(cat_name);
+        let count: Int = list_len(items);
+        let mut sample: String = "";
+        let mut si: Int = 0;
+        while si < count && si < 4 {
+            let g: GlyphItem = list_get(items, si);
+            sample = sample + g.symbol + " ";
+            si = si + 1;
+        }
+        out = list_push(out, make_category_summary(cat_name, count, sample));
+        ci = ci + 1;
+    }
+
+    return out;
+}

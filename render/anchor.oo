@@ -1,0 +1,37 @@
+// # Render Subsystem Anchor
+//
+// Logline: Consolidates glyph table formatters, JSON serializers, and demonstration showcases.
+//
+// Setup: Central entry point for all formatting and presentation operations in ooglyph.
+//
+// Beats:
+//   1. Re-export glyph list and category table renderers.
+//   2. Re-export JSON serializers for search results and category summaries.
+//   3. Re-export multi-category terminal demonstration exhibit generator.
+//   4. Validate render formatting correctness and table generation via self-check.
+
+import "render_table.oo";
+import "render_json.oo";
+import "render_demo.oo";
+import "core/glyph_filter.oo";
+
+pub fn verify_render_subsystem() -> Bool {
+    let dev_items: List[GlyphItem] = filter_by_category("developer");
+    let table_str: String = render_glyph_list(dev_items, false);
+    if chars_len(table_str) == 0 {
+        return false;
+    }
+
+    let summaries: List[CategorySummary] = get_category_summaries();
+    let json_str: String = category_summaries_to_json(summaries);
+    if chars_len(json_str) == 0 {
+        return false;
+    }
+
+    let demo_str: String = render_glyph_demo(false);
+    if chars_len(demo_str) == 0 {
+        return false;
+    }
+
+    return true;
+}

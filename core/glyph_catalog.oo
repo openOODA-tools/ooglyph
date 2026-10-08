@@ -1,0 +1,64 @@
+// # Glyph Catalog Database
+//
+// Logline: Curated in-memory database of Unicode symbols, Nerd Font icons, and UI glyphs.
+//
+// Setup: Pure dataset provider initializing rich character mappings and taxonomy tags.
+//
+// Beats:
+//   1. Register developer and language symbols (git, docker, rust, python, terminal).
+//   2. Register UI navigation and status markers (arrows, checks, crosses, sparkles).
+//   3. Register powerline, security, and hardware indicators (branch, lock, battery, shield).
+//   4. Register box-drawing, geometric shapes, and circadian astronomical symbols.
+
+import "glyph_types.oo";
+
+pub fn get_standard_catalog() -> List[GlyphItem] {
+    let mut db: List[GlyphItem] = list_new();
+
+    // --- Developer & Systems ---
+    db = list_push(db, make_glyph_item("git", "U+F1D3", "developer", "", "vcs version branch commit"));
+    db = list_push(db, make_glyph_item("git-branch", "U+E0A0", "developer", "", "powerline vcs branch git"));
+    db = list_push(db, make_glyph_item("docker", "U+F21F", "developer", "", "container podman devops"));
+    db = list_push(db, make_glyph_item("rust", "U+E7A8", "developer", "", "ferris language compiler"));
+    db = list_push(db, make_glyph_item("python", "U+E73C", "developer", "", "scripting language py"));
+    db = list_push(db, make_glyph_item("golang", "U+E627", "developer", "", "google gopher language"));
+    db = list_push(db, make_glyph_item("terminal", "U+F120", "developer", "", "cli console shell prompt"));
+    db = list_push(db, make_glyph_item("database", "U+F1C0", "developer", "", "sql storage schema rdbms"));
+    db = list_push(db, make_glyph_item("server", "U+F233", "developer", "", "host machine daemon"));
+
+    // --- UI & Navigation ---
+    db = list_push(db, make_glyph_item("check", "U+2714", "ui", "✔", "success tick pass done ok"));
+    db = list_push(db, make_glyph_item("cross", "U+2718", "ui", "✘", "fail error cancel reject"));
+    db = list_push(db, make_glyph_item("arrow-right", "U+2192", "ui", "→", "forward next proceed"));
+    db = list_push(db, make_glyph_item("arrow-left", "U+2190", "ui", "←", "back previous return"));
+    db = list_push(db, make_glyph_item("chevron-right", "U+203A", "ui", "›", "breadcrumb step next"));
+    db = list_push(db, make_glyph_item("sparkle", "U+2728", "ui", "✨", "ai star magic prompt new"));
+    db = list_push(db, make_glyph_item("refresh", "U+21BB", "ui", "↻", "reload sync loop retry"));
+    db = list_push(db, make_glyph_item("play", "U+25B6", "ui", "▶", "run start execute resume"));
+
+    // --- Status, Powerline & Security ---
+    db = list_push(db, make_glyph_item("lock", "U+F023", "status", "", "security secure ssl auth"));
+    db = list_push(db, make_glyph_item("shield", "U+F132", "status", "", "guard protect firewall verify"));
+    db = list_push(db, make_glyph_item("lightning", "U+26A1", "status", "⚡", "fast power energy high"));
+    db = list_push(db, make_glyph_item("flame", "U+F06D", "status", "", "fire hot warning urgent"));
+    db = list_push(db, make_glyph_item("battery", "U+F240", "status", "", "power charge hardware level"));
+    db = list_push(db, make_glyph_item("bell", "U+F0F3", "status", "", "alert notify reminder"));
+
+    // --- Box Drawing & Geometric ---
+    db = list_push(db, make_glyph_item("box-h", "U+2500", "box", "─", "horizontal line border table"));
+    db = list_push(db, make_glyph_item("box-v", "U+2502", "box", "│", "vertical bar border column"));
+    db = list_push(db, make_glyph_item("box-tl", "U+250C", "box", "┌", "corner top-left border"));
+    db = list_push(db, make_glyph_item("box-tr", "U+2510", "box", "┐", "corner top-right border"));
+    db = list_push(db, make_glyph_item("box-bl", "U+2514", "box", "└", "corner bottom-left border"));
+    db = list_push(db, make_glyph_item("box-br", "U+2518", "box", "┘", "corner bottom-right border"));
+    db = list_push(db, make_glyph_item("block-full", "U+2588", "box", "█", "solid square bar fill"));
+    db = list_push(db, make_glyph_item("diamond", "U+25C6", "box", "◆", "solid diamond bullet point"));
+    db = list_push(db, make_glyph_item("circle-dot", "U+25C9", "box", "◉", "radio target selected marker"));
+
+    // --- Circadian & Astronomical ---
+    db = list_push(db, make_glyph_item("sun", "U+2600", "circadian", "☀", "day light dawn morning"));
+    db = list_push(db, make_glyph_item("moon", "U+263D", "circadian", "☽", "night dusk midnight circadian"));
+    db = list_push(db, make_glyph_item("star", "U+2605", "circadian", "★", "favorite rate gold astro"));
+
+    return db;
+}

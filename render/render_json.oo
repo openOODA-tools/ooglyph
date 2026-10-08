@@ -1,0 +1,82 @@
+// # Glyph JSON Serializer
+//
+// Logline: Serializes glyph records, search matches, and category summaries into structured JSON.
+//
+// Setup: Pure JSON string encoder providing schema-compliant payloads for CLI and MCP.
+//
+// Beats:
+//   1. Escape quotes and special control characters in glyph names and categories.
+//   2. Serialize single GlyphItem records into JSON objects.
+//   3. Serialize GlyphSearchResult collections and total match metrics.
+//   4. Serialize CategorySummary models and taxonomy metadata.
+
+import "core/glyph_types.oo";
+
+fn json_escape(s: String) -> String {
+    let length: Int = chars_len(s);
+    let mut out: String = "";
+    let mut i: Int = 0;
+
+    while i < length {
+        let ch: String = str_slice(s, i, i + 1);
+        if ch == "\"" {
+            out = out + "\\\"";
+        } else if ch == "\\" {
+            out = out + "\\\\";
+        } else if ch == "\n" {
+            out = out + "\\n";
+        } else if ch == "\t" {
+            out = out + "\\t";
+        } else {
+            out = out + ch;
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+pub fn glyph_item_to_json(item: GlyphItem) -> String {
+    return "{\"name\":\"" + json_escape(item.name) + "\""
+        + ",\"symbol\":\"" + json_escape(item.symbol) + "\""
+        + ",\"codepoint\":\"" + json_escape(item.codepoint_hex) + "\""
+        + ",\"category\":\"" + json_escape(item.category) + "\""
+        + ",\"tags\":\"" + json_escape(item.tags) + "\"}";
+}
+
+pub fn search_result_to_json(res: GlyphSearchResult) -> String {
+    let mut out: String = "{\"query\":\"" + json_escape(res.query) + "\"";
+    out = out + ",\"match_count\":" + res.match_count.to_string();
+    out = out + ",\"glyphs\":[";
+
+    let count: Int = list_len(res.items);
+    let mut i: Int = 0;
+    while i < count {
+        if i > 0 {
+            out = out + ",";
+        }
+        let item: GlyphItem = list_get(res.items, i);
+        out = out + glyph_item_to_json(item);
+        i = i + 1;
+    }
+    out = out + "]}";
+    return out;
+}
+
+pub fn category_summaries_to_json(summaries: List[CategorySummary]) -> String {
+    let mut out: String = "{\"categories\":[";
+    let count: Int = list_len(summaries);
+    let mut i: Int = 0;
+
+    while i < count {
+        if i > 0 {
+            out = out + ",";
+        }
+        let s: CategorySummary = list_get(summaries, i);
+        out = out + "{\"category\":\"" + json_escape(s.name) + "\""
+            + ",\"count\":" + s.count.to_string()
+            + ",\"samples\":\"" + json_escape(s.sample_symbols) + "\"}";
+        i = i + 1;
+    }
+    out = out + "]}";
+    return out;
+}

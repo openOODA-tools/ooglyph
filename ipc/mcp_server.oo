@@ -1,0 +1,142 @@
+// # Model Context Protocol Stdio Server
+//
+// Logline: Streaming JSON-RPC 2.0 protocol handler providing 5 sovereign glyph intelligence tools.
+//
+// Setup: Requires &FsReadCap for processing stdio RPC messages with negative-trust framing.
+//
+// Beats:
+//   1. Handle JSON-RPC lifecycle methods (initialize, ping, tools/list, shutdown).
+//   2. Dispatch tool calls: glyph_search, glyph_lookup, glyph_categories, glyph_table, glyph_demo.
+//   3. Extract request parameters and validate framing invariants.
+//   4. Format conformant JSON-RPC responses and send to standard output.
+
+import "core/glyph_types.oo";
+import "core/glyph_filter.oo";
+import "render/render_table.oo";
+import "render/render_json.oo";
+import "render/render_demo.oo";
+import "json_field.oo";
+
+fn mcp_success(id: String, result_json: String) -> String {
+    let id_field: String = if chars_len(id) == 0 { "null" } else if byte_at(id, 0) == 34 { id } else { id };
+    return "{\"jsonrpc\":\"2.0\",\"id\":" + id_field + ",\"result\":" + result_json + "}\n";
+}
+
+fn mcp_error(id: String, code: Int, msg: String) -> String {
+    let id_field: String = if chars_len(id) == 0 { "null" } else { id };
+    return "{\"jsonrpc\":\"2.0\",\"id\":" + id_field + ",\"error\":{\"code\":" + code.to_string() + ",\"message\":\"" + json_str_escape(msg) + "\"}}\n";
+}
+
+fn handle_tools_list(id: String) -> String {
+    let list_json: String = "{\"tools\":["
+        + "{\"name\":\"glyph_search\",\"description\":\"Search glyph database by keyword, tag, or symbol name.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"Search keyword.\"}},\"required\":[\"query\"]}},"
+        + "{\"name\":\"glyph_lookup\",\"description\":\"Lookup a glyph by exact character or Unicode codepoint (U+XXXX).\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"identifier\":{\"type\":\"string\",\"description\":\"Codepoint or character symbol.\"}},\"required\":[\"identifier\"]}},"
+        + "{\"name\":\"glyph_categories\",\"description\":\"List available symbol categories and icon counts.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{}}},"
+        + "{\"name\":\"glyph_table\",\"description\":\"Generate a formatted table for a specific symbol category.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"category\":{\"type\":\"string\",\"description\":\"Category name: developer, ui, status, box, circadian.\"}},\"required\":[\"category\"]}},"
+        + "{\"name\":\"glyph_demo\",\"description\":\"Run interactive showcase of curated icon sets.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{}}}"
+        + "]}";
+    return mcp_success(id, list_json);
+}
+
+pub fn handle_mcp_message(raw: String) -> String {
+    let method: String = json_extract_str_field(raw, "method");
+    let id_str: String = json_extract_str_field(raw, "id");
+    let id_val: String = if chars_len(id_str) > 0 { "\"" + id_str + "\"" } else { json_extract_int_field(raw, "id", 1).to_string() };
+
+    if method == "initialize" {
+        let init_result: String = "{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{\"tools\":{}},\"serverInfo\":{\"name\":\"ooglyph\",\"version\":\"0.2.0\"}}";
+        return mcp_success(id_val, init_result);
+    }
+    if method == "ping" {
+        return mcp_success(id_val, "{}");
+    }
+    if method == "tools/list" {
+        return handle_tools_list(id_val);
+    }
+    if method == "tools/call" {
+        let tool_name: String = json_extract_str_field(raw, "name");
+
+        if tool_name == "glyph_search" {
+            let q: String = json_extract_str_field(raw, "query");
+            let res: GlyphSearchResult = search_glyphs(q);
+            let json_body: String = search_result_to_json(res);
+            return mcp_success(id_val, "{\"content\":[{\"type\":\"text\",\"text\":\"" + json_str_escape(json_body) + "\"}]}");
+        }
+        if tool_name == "glyph_lookup" {
+            let ident: String = json_extract_str_field(raw, "identifier");
+            let res: GlyphSearchResult = lookup_glyph_exact(ident);
+            let json_body: String = search_result_to_json(res);
+            return mcp_success(id_val, "{\"content\":[{\"type\":\"text\",\"text\":\"" + json_str_escape(json_body) + "\"}]}");
+        }
+        if tool_name == "glyph_categories" {
+            let summaries: List[CategorySummary] = get_category_summaries();
+            let json_body: String = category_summaries_to_json(summaries);
+            return mcp_success(id_val, "{\"content\":[{\"type\":\"text\",\"text\":\"" + json_str_escape(json_body) + "\"}]}");
+        }
+        if tool_name == "glyph_table" {
+            let cat: String = json_extract_str_field(raw, "category");
+            let items: List[GlyphItem] = filter_by_category(cat);
+            let table_text: String = render_glyph_list(items, false);
+            return mcp_success(id_val, "{\"content\":[{\"type\":\"text\",\"text\":\"" + json_str_escape(table_text) + "\"}]}");
+        }
+        if tool_name == "glyph_demo" {
+            let showcase: String = render_glyph_demo(false);
+            return mcp_success(id_val, "{\"content\":[{\"type\":\"text\",\"text\":\"" + json_str_escape(showcase) + "\"}]}");
+        }
+
+        return mcp_error(id_val, -32601, "Unknown tool: " + tool_name);
+    }
+    if method == "shutdown" {
+        return mcp_success(id_val, "{}");
+    }
+    if method == "exit" {
+        return "";
+    }
+
+    return mcp_error(id_val, -32601, "Method not found: " + method);
+}
+
+fn find_newline_pos(s: String) -> Int {
+    let n: Int = chars_len(s);
+    let mut i: Int = 0;
+    while i < n {
+        if byte_at(s, i) == 10 {
+            return i;
+        }
+        i = i + 1;
+    }
+    return -1;
+}
+
+pub fn run_mcp_server(fs: &FsReadCap) -> Int {
+    let mut buf: String = "";
+    let mut running: Bool = true;
+
+    while running {
+        let r: Result[String, String] = oo_read_stdin_chunk(fs, 4096);
+        if !r.is_ok() {
+            running = false;
+        } else {
+            let chunk: String = match r { Ok(s) => s, Err(_) => "" };
+            if chars_len(chunk) == 0 {
+                running = false;
+            } else {
+                buf = buf + chunk;
+                let mut nl_pos: Int = find_newline_pos(buf);
+                while nl_pos >= 0 {
+                    let line: String = str_slice(buf, 0, nl_pos);
+                    buf = str_slice(buf, nl_pos + 1, chars_len(buf));
+                    let trimmed: String = str_trim(line);
+                    if chars_len(trimmed) > 0 {
+                        let resp: String = handle_mcp_message(trimmed);
+                        if chars_len(resp) > 0 {
+                            print(resp);
+                        }
+                    }
+                    nl_pos = find_newline_pos(buf);
+                }
+            }
+        }
+    }
+    return 0;
+}

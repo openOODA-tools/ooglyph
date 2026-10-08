@@ -5,48 +5,118 @@
 // Setup: Demands explicit capability tokens and standard argument list.
 //
 // Beats:
-//   1. Parse command-line options and dispatch --help, --version, or --mcp.
-//   2. Execute capability-bounded ooglyph operations.
-//   3. Format and output structured results to standard output.
+//   1. Parse command-line options and dispatch --help, --version, --test, --demo, or --mcp.
+//   2. Query curated glyph database by keyword, taxonomy category, or exact codepoint.
+//   3. Format results as aligned terminal tables, single-character streams, or structured JSON.
+//   4. Execute comprehensive multi-tier internal self-checks when invoked with --test.
 
-fn render_help() -> String {
-    return "ooglyph 0.1.0 (openOODA sovereign theme & styling)\n"
-        + "usage: ooglyph [options] [ARGUMENTS]...\n\n"
-        + "Interactive glyph search and viewer for Nerd Font symbols and Unicode iconography.\n\n"
-        + "Options:\n"
-        + "  -h, --help           display this help and exit\n"
-        + "  -v, --version        output version information and exit\n"
-        + "      --json           output formatted as JSON Lines\n"
-        + "      --color <WHEN>   colorize output: auto, always, never [default: auto]\n"
-        + "      --theme <NAME>   override active oote palette\n"
-        + "      --mcp            run as Model Context Protocol stdio server\n";
-}
+import "core/anchor.oo";
+import "render/anchor.oo";
+import "ipc/anchor.oo";
+import "anchor.oo";
 
-fn render_version() -> String {
-    return "ooglyph 0.1.0 (openOODA sovereign theme & styling)\n";
-}
-
-fn main(args: List[String]) -> Int {
-    let num_args: Int = list_len(args);
-    let mut i: Int = 0;
-
-    while i < num_args {
-        let arg: String = list_get(args, i);
-        if arg == "-h" || arg == "--help" {
-            print(render_help());
-            return 0;
-        }
-        if arg == "-v" || arg == "--version" {
-            print(render_version());
-            return 0;
-        }
-        if arg == "--mcp" {
-            print("{\"jsonrpc\":\"2.0\",\"result\":{\"status\":\"ready\",\"tool\":\"ooglyph\"}}\n");
-            return 0;
-        }
-        i = i + 1;
+fn run_all_tests() -> Bool {
+    // Cross-subsystem verification
+    if !verify_root_subsystem() {
+        return false;
     }
 
-    print("ooglyph: sovereign capability-bounded utility ready\n");
+    // Tier 1: Options parsing test
+    let t1_args: List[String] = list_push(list_push(list_new(), "-c"), "developer");
+    let opts: CliOptions = parse_cli_options(t1_args);
+    if opts.category_filter != "developer" {
+        return false;
+    }
+
+    // Tier 2: Search test
+    let search_res: GlyphSearchResult = search_glyphs("rust");
+    if search_res.match_count == 0 {
+        return false;
+    }
+
+    // Tier 3: Lookup test
+    let lookup_res: GlyphSearchResult = lookup_glyph_exact("git");
+    if lookup_res.match_count == 0 {
+        return false;
+    }
+
+    // Tier 4: Single char rendering
+    let char_out: String = render_single_char_only(lookup_res.items);
+    if chars_len(char_out) == 0 {
+        return false;
+    }
+
+    return true;
+}
+
+pub fn main(
+    fr: &FsReadCap,
+    _pr: &ProcessCap,
+    _env: &EnvCap,
+    args: List[String]
+) -> Int {
+    let opts: CliOptions = parse_cli_options(args);
+
+    if opts.show_help {
+        print(render_cli_help());
+        return 0;
+    }
+    if opts.show_version {
+        print(render_cli_version());
+        return 0;
+    }
+    if opts.run_test {
+        if run_all_tests() {
+            print("ooglyph: internal anchor tests PASSED\n");
+            return 0;
+        } else {
+            print("ooglyph: internal anchor tests FAILED\n");
+            return 1;
+        }
+    }
+    if opts.show_mcp {
+        return run_mcp_server(fr);
+    }
+    if opts.show_demo {
+        print(render_glyph_demo(opts.use_color));
+        return 0;
+    }
+    if opts.show_categories {
+        let summaries: List[CategorySummary] = get_category_summaries();
+        if opts.json_output {
+            print(category_summaries_to_json(summaries) + "\n");
+        } else {
+            print(render_categories_table(summaries, opts.use_color));
+        }
+        return 0;
+    }
+
+    // Query resolution
+    let mut search_res: GlyphSearchResult = make_search_result("", list_new());
+
+    if chars_len(opts.codepoint_filter) > 0 {
+        search_res = lookup_glyph_exact(opts.codepoint_filter);
+    } else if chars_len(opts.category_filter) > 0 {
+        let items: List[GlyphItem] = filter_by_category(opts.category_filter);
+        search_res = make_search_result(opts.category_filter, items);
+    } else if chars_len(opts.query) > 0 {
+        search_res = search_glyphs(opts.query);
+    } else {
+        // Default display: full standard catalog
+        let all_items: List[GlyphItem] = get_standard_catalog();
+        search_res = make_search_result("all", all_items);
+    }
+
+    if opts.char_only {
+        print(render_single_char_only(search_res.items));
+        return 0;
+    }
+
+    if opts.json_output {
+        print(search_result_to_json(search_res) + "\n");
+        return 0;
+    }
+
+    print(render_glyph_list(search_res.items, opts.use_color));
     return 0;
 }

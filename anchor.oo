@@ -1,13 +1,34 @@
-// # ooglyph Root Anchor
+// # ooglyph Root Subsystem Anchor
 //
-// Logline: Top-level anchor re-exporting options, core logic, render, and ipc subsystems.
+// Logline: Consolidates and re-exports core, render, and ipc subsystem anchors for ooglyph.
 //
-// Setup: Pure shim re-exporting all ooglyph subsystem anchors.
+// Setup: Root orchestration module ensuring complete architectural integrity.
 //
 // Beats:
-//   1. Re-export options parsing subsystem.
-//   2. Re-export core ooglyph execution engine.
-//   3. Re-export render formatting subsystem.
-//   4. Re-export Model Context Protocol (MCP) IPC subsystem.
+//   1. Re-export core glyph database and search filtering engine.
+//   2. Re-export render formatters for glyph tables and JSON telemetry.
+//   3. Re-export IPC options parser and streaming MCP server.
+//   4. Validate cross-subsystem integration through comprehensive verification check.
 
-import "main.oo";
+import "core/anchor.oo";
+import "render/anchor.oo";
+import "ipc/anchor.oo";
+
+pub fn verify_root_subsystem() -> Bool {
+    let core_ok: Bool = verify_core_subsystem();
+    if !core_ok {
+        return false;
+    }
+
+    let render_ok: Bool = verify_render_subsystem();
+    if !render_ok {
+        return false;
+    }
+
+    let ipc_ok: Bool = verify_ipc_subsystem();
+    if !ipc_ok {
+        return false;
+    }
+
+    return true;
+}

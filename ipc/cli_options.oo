@@ -1,0 +1,117 @@
+// # Command-Line Options Parser
+//
+// Logline: Decodes CLI flags, query strings, category filters, and display modes for ooglyph.
+//
+// Setup: Pure argument tokenizer supporting searches, codepoint lookups, and MCP stdio switches.
+//
+// Beats:
+//   1. Define structured CliOptions configuration type.
+//   2. Parse help, version, category, and raw codepoint switches.
+//   3. Parse single-character emit flag (-1) and color override controls.
+//   4. Format standardized usage documentation and version text banners.
+
+pub type CliOptions = struct {
+    show_help: Bool,
+    show_version: Bool,
+    show_mcp: Bool,
+    show_demo: Bool,
+    show_categories: Bool,
+    char_only: Bool,
+    json_output: Bool,
+    use_color: Bool,
+    run_test: Bool,
+    category_filter: String,
+    codepoint_filter: String,
+    query: String
+};
+
+pub fn render_cli_help() -> String {
+    return "ooglyph 0.2.0 (openOODA sovereign glyph search & iconography viewer)\n"
+        + "usage: ooglyph [options] [<search_term>]\n\n"
+        + "Interactive glyph search and viewer for Nerd Font symbols and Unicode iconography.\n\n"
+        + "Options:\n"
+        + "  -h, --help               display this help and exit\n"
+        + "  -v, --version            output version information and exit\n"
+        + "  -c, --category <NAME>    filter glyphs by category (developer, ui, status, box, circadian)\n"
+        + "  -u, --codepoint <HEX>    lookup glyph by exact codepoint (e.g. U+E7A8, 0x2714)\n"
+        + "      --categories         list all taxonomy categories and item counts\n"
+        + "  -1, --char-only          output only the raw symbol character of first match\n"
+        + "  -j, --json               output structured JSON metrics\n"
+        + "  -D, --demo               interactive multi-category glyph showcase\n"
+        + "      --no-color           suppress ANSI color escape sequences\n"
+        + "      --test               execute internal multi-tier verification suite\n"
+        + "      --mcp                run as Model Context Protocol stdio server\n";
+}
+
+pub fn render_cli_version() -> String {
+    return "ooglyph 0.2.0 (openOODA sovereign userland)\n";
+}
+
+pub fn parse_cli_options(args: List[String]) -> CliOptions {
+    let mut help_flag: Bool = false;
+    let mut ver_flag: Bool = false;
+    let mut mcp_flag: Bool = false;
+    let mut demo_flag: Bool = false;
+    let mut cats_flag: Bool = false;
+    let mut char_flag: Bool = false;
+    let mut json_flag: Bool = false;
+    let mut color_flag: Bool = true;
+    let mut test_flag: Bool = false;
+    let mut cat_str: String = "";
+    let mut cp_str: String = "";
+    let mut q_str: String = "";
+
+    let n: Int = list_len(args);
+    let mut i: Int = 0;
+
+    while i < n {
+        let arg: String = list_get(args, i);
+        if arg == "-h" || arg == "--help" {
+            help_flag = true;
+        } else if arg == "-v" || arg == "--version" {
+            ver_flag = true;
+        } else if arg == "--mcp" {
+            mcp_flag = true;
+        } else if arg == "-D" || arg == "--demo" {
+            demo_flag = true;
+        } else if arg == "--categories" {
+            cats_flag = true;
+        } else if arg == "-1" || arg == "--char-only" {
+            char_flag = true;
+        } else if arg == "-j" || arg == "--json" {
+            json_flag = true;
+        } else if arg == "--no-color" {
+            color_flag = false;
+        } else if arg == "--test" {
+            test_flag = true;
+        } else if (arg == "-c" || arg == "--category") && i + 1 < n {
+            cat_str = list_get(args, i + 1);
+            i = i + 1;
+        } else if (arg == "-u" || arg == "--codepoint") && i + 1 < n {
+            cp_str = list_get(args, i + 1);
+            i = i + 1;
+        } else if !str_starts_with(arg, "-") {
+            if chars_len(q_str) == 0 {
+                q_str = arg;
+            } else {
+                q_str = q_str + " " + arg;
+            }
+        }
+        i = i + 1;
+    }
+
+    return CliOptions {
+        show_help: help_flag,
+        show_version: ver_flag,
+        show_mcp: mcp_flag,
+        show_demo: demo_flag,
+        show_categories: cats_flag,
+        char_only: char_flag,
+        json_output: json_flag,
+        use_color: color_flag,
+        run_test: test_flag,
+        category_filter: cat_str,
+        codepoint_filter: cp_str,
+        query: q_str
+    };
+}

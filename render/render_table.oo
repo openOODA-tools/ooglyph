@@ -1,0 +1,87 @@
+// # Glyph Table and Matrix Renderer
+//
+// Logline: Formats glyph entries into aligned terminal tables, category matrices, and raw character streams.
+//
+// Setup: Pure string formatter rendering Unicode glyph iconography with ANSI styles.
+//
+// Beats:
+//   1. Build ANSI color codes with safe escape construction for terminal highlights.
+//   2. Format fixed-column glyph detail rows with symbols, hex codepoints, and names.
+//   3. Render category overview tables with item counts and sample icon clusters.
+//   4. Support raw single-character emission for shell prompt and pipeline integration.
+
+import "core/glyph_types.oo";
+
+fn ansi_esc() -> String {
+    return bytes_to_str(bytes_push(bytes_new(), 27));
+}
+
+fn color_cyan(s: String, use_color: Bool) -> String {
+    if !use_color { return s; }
+    return ansi_esc() + "[36m" + s + ansi_esc() + "[0m";
+}
+
+fn color_yellow(s: String, use_color: Bool) -> String {
+    if !use_color { return s; }
+    return ansi_esc() + "[33m" + s + ansi_esc() + "[0m";
+}
+
+fn color_bold(s: String, use_color: Bool) -> String {
+    if !use_color { return s; }
+    return ansi_esc() + "[1m" + s + ansi_esc() + "[0m";
+}
+
+pub fn render_glyph_row(item: GlyphItem, use_color: Bool) -> String {
+    let sym_padded: String = " " + item.symbol + "  ";
+    let cp_padded: String = color_cyan(item.codepoint_hex, use_color) + "  ";
+    let cat_badge: String = color_yellow("[" + item.category + "]", use_color) + "  ";
+    let name_str: String = color_bold(item.name, use_color);
+    return sym_padded + cp_padded + cat_badge + name_str + "\n";
+}
+
+pub fn render_glyph_list(items: List[GlyphItem], use_color: Bool) -> String {
+    let count: Int = list_len(items);
+    if count == 0 {
+        return "No glyphs found matching query.\n";
+    }
+
+    let mut out: String = "";
+    let hdr: String = "GLYPH  CODEPOINT  CATEGORY      NAME\n";
+    out = out + color_bold(hdr, use_color);
+    out = out + "───────────────────────────────────────────────────────\n";
+
+    let mut i: Int = 0;
+    while i < count {
+        let item: GlyphItem = list_get(items, i);
+        out = out + render_glyph_row(item, use_color);
+        i = i + 1;
+    }
+
+    out = out + "\nTotal: " + count.to_string() + " glyph" + (if count == 1 { "" } else { "s" }) + "\n";
+    return out;
+}
+
+pub fn render_categories_table(summaries: List[CategorySummary], use_color: Bool) -> String {
+    let mut out: String = "";
+    let hdr: String = "CATEGORY      COUNT  SAMPLES\n";
+    out = out + color_bold(hdr, use_color);
+    out = out + "───────────────────────────────────────────────────────\n";
+
+    let count: Int = list_len(summaries);
+    let mut i: Int = 0;
+    while i < count {
+        let s: CategorySummary = list_get(summaries, i);
+        out = out + color_yellow(s.name, use_color) + "    " + s.count.to_string() + "      " + s.sample_symbols + "\n";
+        i = i + 1;
+    }
+
+    return out;
+}
+
+pub fn render_single_char_only(items: List[GlyphItem]) -> String {
+    if list_len(items) == 0 {
+        return "";
+    }
+    let first: GlyphItem = list_get(items, 0);
+    return first.symbol + "\n";
+}

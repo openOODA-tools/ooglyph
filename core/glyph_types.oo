@@ -1,0 +1,63 @@
+// # Glyph Data Types
+//
+// Logline: Data structures representing Unicode iconography, Nerd Font symbols, and category taxonomies.
+//
+// Setup: Pure type declarations and model factories for font glyph entities.
+//
+// Beats:
+//   1. Declare core GlyphItem model capturing codepoints, symbols, categories, and tags.
+//   2. Declare query search result container with matching item lists.
+//   3. Declare CategorySummary model aggregating family counts and samples.
+//   4. Provide pure constructor helpers for glyph records and query results.
+
+pub type GlyphItem = struct {
+    name: String,
+    codepoint_hex: String,
+    category: String,
+    symbol: String,
+    tags: String
+};
+
+pub type GlyphSearchResult = struct {
+    query: String,
+    match_count: Int,
+    items: List[GlyphItem]
+};
+
+pub type CategorySummary = struct {
+    name: String,
+    count: Int,
+    sample_symbols: String
+};
+
+pub fn make_glyph_item(
+    g_name: String,
+    cp_hex: String,
+    cat: String,
+    sym: String,
+    g_tags: String
+) -> GlyphItem {
+    return GlyphItem {
+        name: g_name,
+        codepoint_hex: cp_hex,
+        category: cat,
+        symbol: sym,
+        tags: g_tags
+    };
+}
+
+pub fn make_search_result(q: String, list: List[GlyphItem]) -> GlyphSearchResult {
+    return GlyphSearchResult {
+        query: q,
+        match_count: list_len(list),
+        items: list
+    };
+}
+
+pub fn make_category_summary(cat_name: String, total: Int, samples: String) -> CategorySummary {
+    return CategorySummary {
+        name: cat_name,
+        count: total,
+        sample_symbols: samples
+    };
+}

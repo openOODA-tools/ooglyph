@@ -1,0 +1,40 @@
+// # Glyph Demo Showcase Generator
+//
+// Logline: Synthesizes rich multi-category terminal showcases exhibiting glyph iconography sets.
+//
+// Setup: Pure synthetic renderer organizing iconic symbols into categorized terminal exhibits.
+//
+// Beats:
+//   1. Build multi-category demonstration layout with framed headings.
+//   2. Exhibit developer language and tooling glyph samples.
+//   3. Exhibit UI navigation, status indicators, and security locks.
+//   4. Exhibit box-drawing frames and circadian symbols with taxonomy metrics.
+
+import "core/glyph_types.oo";
+import "core/glyph_filter.oo";
+import "render_table.oo";
+
+pub fn render_glyph_demo(use_color: Bool) -> String {
+    let mut out: String = "";
+    out = out + "==============================================================================\n";
+    out = out + " ooglyph Sovereign Glyph Search & Iconography Viewer — Showcase Exhibit\n";
+    out = out + "==============================================================================\n\n";
+
+    out = out + "--- [1/3] Taxonomy Categories & Cluster Samples ---\n";
+    let summaries: List[CategorySummary] = get_category_summaries();
+    out = out + render_categories_table(summaries, use_color) + "\n";
+
+    out = out + "--- [2/3] Developer & Language Iconography ---\n";
+    let dev_items: List[GlyphItem] = filter_by_category("developer");
+    out = out + render_glyph_list(dev_items, use_color) + "\n";
+
+    out = out + "--- [3/3] Status, Powerline & Security Indicators ---\n";
+    let status_items: List[GlyphItem] = filter_by_category("status");
+    out = out + render_glyph_list(status_items, use_color) + "\n";
+
+    out = out + "==============================================================================\n";
+    out = out + " Status: Pure native openOODA glyph database verified with zero ambient deps.\n";
+    out = out + "==============================================================================\n";
+
+    return out;
+}

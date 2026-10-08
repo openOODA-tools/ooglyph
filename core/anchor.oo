@@ -1,0 +1,39 @@
+// # Core Subsystem Anchor
+//
+// Logline: Consolidates glyph data models, catalog database, and search filter engines.
+//
+// Setup: Central entry point for all core glyph catalog and query operations.
+//
+// Beats:
+//   1. Re-export glyph item data types and category summary structures.
+//   2. Re-export standard symbol catalog and Nerd Font definitions.
+//   3. Re-export keyword search, category filtering, and codepoint lookups.
+//   4. Validate core catalog integrity and category enumeration through self-check.
+
+import "glyph_types.oo";
+import "glyph_catalog.oo";
+import "glyph_filter.oo";
+
+pub fn verify_core_subsystem() -> Bool {
+    let catalog: List[GlyphItem] = get_standard_catalog();
+    if list_len(catalog) == 0 {
+        return false;
+    }
+
+    let search_res: GlyphSearchResult = search_glyphs("git");
+    if search_res.match_count == 0 {
+        return false;
+    }
+
+    let dev_items: List[GlyphItem] = filter_by_category("developer");
+    if list_len(dev_items) == 0 {
+        return false;
+    }
+
+    let summaries: List[CategorySummary] = get_category_summaries();
+    if list_len(summaries) != 5 {
+        return false;
+    }
+
+    return true;
+}

@@ -1,0 +1,10 @@
+Package: ooglyph
+Version: 0.2.0-1
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: openOODA-tools <ops@openooda.org>
+Description: UNICODE GLYPH VIEWER
+ Interactive glyph search and viewer for Nerd Font symbols and Unicode iconography.
+ Capability-bounded openOODA utility with zero ambient authority,
+ font symbol explorer, and native Model Context Protocol (MCP) surface.

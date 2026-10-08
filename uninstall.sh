@@ -4,7 +4,7 @@
 # "Removes ooglyph binary, package installations, and cache."
 #
 # Usage:
-#   curl -fsSL https://openooda-tooglyph.github.io/ooglyph/uninstall.sh | bash
+#   curl -fsSL https://openooda-tools.github.io/ooglyph/uninstall.sh | bash
 #   or: ./uninstall.sh [options]
 #
 # Options:

@@ -1,0 +1,32 @@
+// # IPC Subsystem Anchor
+//
+// Logline: Consolidates JSON parsing, command-line arguments decoding, and MCP server handling.
+//
+// Setup: Central entry point for all protocol and options parsing in ooglyph.
+//
+// Beats:
+//   1. Re-export JSON field extraction and RFC 8259 escaping routines.
+//   2. Re-export CLI options parser and help/version text formatters.
+//   3. Re-export Model Context Protocol (MCP) JSON-RPC 2.0 stdio server.
+//   4. Execute verification tests validating parsing integrity across IPC components.
+
+import "json_field.oo";
+import "cli_options.oo";
+import "mcp_server.oo";
+
+pub fn verify_ipc_subsystem() -> Bool {
+    let dummy_json: String = "{\"method\":\"ping\",\"id\":7}";
+    let method: String = json_extract_str_field(dummy_json, "method");
+    if method != "ping" {
+        return false;
+    }
+
+    let dummy_args: List[String] = list_push(list_new(), "-c");
+    let dummy_args2: List[String] = list_push(dummy_args, "developer");
+    let opts: CliOptions = parse_cli_options(dummy_args2);
+    if opts.category_filter != "developer" {
+        return false;
+    }
+
+    return true;
+}

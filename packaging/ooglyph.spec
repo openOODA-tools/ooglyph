@@ -1,5 +1,5 @@
 Name:           ooglyph
-Version:        0.1.0
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        Interactive glyph search and viewer for Nerd Font symbols and Unicode iconography.
 License:        ASL 2.0
